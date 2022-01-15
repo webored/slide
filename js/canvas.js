@@ -1,6 +1,12 @@
-const COVERED = 1,
-      UNCOVERED = 2,
-      SOLVED = 3;
+const UP = "ArrowUp",
+      LEFT = "ArrowLeft",
+      DOWN = "ArrowDown",
+      RIGHT = "ArrowRight";
+
+const W = "KeyW",
+      A = "KeyA",
+      S = "KeyS",
+      D = "KeyD";
 
 const YEAR = 12 * 30 * 24 * 60 * 60;
 
@@ -8,31 +14,12 @@ function init() {
   window.canvas = document.getElementById("canvas");
   window.ctx = window.canvas.getContext("2d");
       
-  window.canvas.addEventListener("mousemove", onMouseMove, true);
-  window.canvas.addEventListener("mouseup", onMouseUp, true);
-
   window.mouseX = 0;
   window.mouseY = 0;
 
-  window.ratios = [
-    {width: 3, height: 8},
-    {width: 4, height: 6},
-    {width: 6, height: 4},
-    {width: 8, height: 3},
-    {width: 12, height: 2},
-    {width: 24, height: 1},
-  ].map(x => ({
-    width: x.width,
-    height: x.height,
-    ratio: (x.width + 1) / (x.height + 1)
-  }));
-
-  window.tileStates = new Array(24).fill(COVERED);
-  window.tiles = Array.from({ length: 24 }, (_, i) =>
-    ({ value: Math.floor(i / 2), order: Math.random() }))
-      .sort((a, b) => a.order - b.order)
-      .map(({ value: value }) => value);
-  window.selection = new Array();
+  document.addEventListener("keydown", onKeyDown);
+  window.canvas.addEventListener("mousemove", onMouseMove, true);
+  window.canvas.addEventListener("mouseup", onMouseUp, true);
 
   window.solved = 0;
   window.currentScore = { moves: 0, time: 0, exists: true };
@@ -55,105 +42,37 @@ function onMouseUp() {
       Math.pow(window.restartR, 2)) {
     if (window.timeKeeper) window.clearInterval(window.timeKeeper);
     init();
+    alert("restart");
     return;
-  }
-
-  var index = getTileClicked();
-  if (index < 0 || index >= 24 || window.tileStates[index] != COVERED) return;
-
-  if (window.selection.length == 2) {
-    var first = window.selection[0],
-        second = window.selection[1]
-    window.tileStates[first] = COVERED;
-    window.tileStates[second] = COVERED;
-    window.selection = new Array();
-    renderTile(first);
-    renderTile(second);
-  }
-  window.selection.push(index);
-  window.tileStates[index] = UNCOVERED;
-  renderTile(index);
-
-  if (window.selection.length == 2) {
-    var first = window.selection[0],
-        second = window.selection[1];
-    if (window.tiles[first] == window.tiles[second]) {
-      window.tileStates[first] = SOLVED;
-      window.tileStates[second] = SOLVED;
-      renderTile(first);
-      renderTile(second);
-      window.solved++;
-      window.selection = new Array();
-    } else {
-      window.tileStates[first] = COVERED;
-      window.tileStates[second] = COVERED;
-    }
-    if (window.currentScore.moves == 0) {
-      window.timeKeeper = window.setInterval(() => {
-        window.currentScore.time++;
-        renderMeta();
-      }, 1000);
-    }
-    window.currentScore.moves++;
-    renderMeta();
-    if (window.solved >= 12) {
-      window.clearInterval(window.timeKeeper);
-      if (!window.bestM.exists ||
-          window.currentScore.moves < window.bestM.moves)
-        window.bestM = {
-          moves: window.currentScore.moves,
-          time: window.currentScore.time,
-          exists: true,
-        };
-      if (!window.bestT.exists ||
-          window.currentScore.time < window.bestT.time)
-        window.bestT = {
-          moves: window.currentScore.moves,
-          time: window.currentScore.time,
-          exists: true,
-        };
-      setCookie(window.bestM, "bestMoves");
-      setCookie(window.bestT, "bestTime");
-    }
   }
 }
 
-function getTileClicked() {
-  var x = Math.floor((window.mouseX - window.offsetX) / window.tileDim),
-      y = Math.floor((window.mouseY - window.offsetY) / window.tileDim);
-  if (x < 0 || x >= window.width || y < 0 || y >= window.height) return -1;
-  return x + y * window.width;
+function onKeyDown(e) {
+  if (e.code == UP || e.code == W)
+    move(0, -1);
+  else if (e.code == LEFT || e.code == A)
+    move(-1, 0);
+  else if (e.code == DOWN || e.code == S)
+    move(0, 1);
+  else if (e.code == RIGHT || e.code == D)
+    move(1, 0);
+}
+
+function move(dx, dy) {
+  alert(dx + ", " + dy);
 }
 
 function updateDimensions() {
   var width = window.canvas.getBoundingClientRect().width,
-      height = window.canvas.getBoundingClientRect().height,
-      whRatio = width / height;
+      height = window.canvas.getBoundingClientRect().height;
 
-  var lo = 0,
-      hi = window.ratios.length - 1,
-      mid;
-  while (hi > lo + 1) {
-    mid = Math.floor((hi + lo) / 2);
-    if (whRatio > window.ratios[mid].ratio) lo = mid;
-    else hi = mid;
-  }
-
-  var ratio;
-  if (whRatio - window.ratios[lo].ratio < 
-      window.ratios[hi].ratio - whRatio) ratio = window.ratios[lo];
-  else ratio = window.ratios[hi];
-
-  window.width = ratio.width;
-  window.height = ratio.height;
   window.canvas.width = width;
   window.canvas.height = height;
-  window.tileDim = Math.min(
-    width / (window.width + 1),
-    height / (window.height + 1)
-  );
-  window.offsetX = (width - (window.width * window.tileDim)) / 2;
-  window.offsetY = (height - (window.height * window.tileDim)) / 2;
+  window.tileDim = Math.min(width, height) / 5;
+
+  var boardDim = 4 * window.tileDim;
+  window.offsetX = (width - boardDim) / 2;
+  window.offsetY = (height - boardDim) / 2;
 
   window.restartX = width - window.tileDim / 4;
   window.restartY = window.tileDim / 4;
@@ -204,24 +123,6 @@ function renderTile(index) {
     x + r + margin, y + margin
   );
   window.ctx.stroke();
-
-  if (window.tileStates[index] == SOLVED) window.ctx.fillStyle = "grey";
-  else window.ctx.fillStyle = "white";
-  window.ctx.fill();
-
-  if (window.tileStates[index] != COVERED || window.selection.includes(index)) {
-    var shapeRender = [renderStar, renderTriangle, renderCircle, renderSquare],
-        colors = ["orange", "blue", "red"];
-
-    var type = window.tiles[index],
-        shape = type % 4;
-        color = Math.floor(type / 4);
-
-    var cx = x + window.tileDim / 2,
-        cy = y + window.tileDim / 2,
-        r = window.tileDim / 4;
-    shapeRender[shape](cx, cy, r, colors[color]);
-  }
 }
 
 function renderStar(cx, cy, r, color) {
