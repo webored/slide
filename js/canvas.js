@@ -17,12 +17,16 @@ function init() {
       
   window.mouseX = 0;
   window.mouseY = 0;
-  window.mouseDown = undefined;
+  window.touchDown = undefined;
 
   document.addEventListener("keydown", onKeyDown);
   window.canvas.addEventListener("mousemove", onMouseMove, true);
-  window.canvas.addEventListener("mousedown", onMouseDown, true);
   window.canvas.addEventListener("mouseup", onMouseUp, true);
+
+  window.canvas.addEventListener("touchmove", onTouchMove, true);
+  window.canvas.addEventListener("touchstart", onTouchDown, true);
+  window.canvas.addEventListener("touchup", onTouchUp, true);
+  window.canvas.addEventListener("touchcancel", () => window.touchDown = undefined, true);
 
   window.tiles =
     Array.from({ length: 4 }, (_, i) =>
@@ -59,30 +63,41 @@ function init() {
 function onMouseMove() {
   window.mouseX = window.event.pageX;
   window.mouseY = window.event.pageY;
+}
+
+function onTouchMove() {
+  //console.log(window.event.targetTouches[0].pageX);
+  window.mouseX = window.event.targetTouches[0].pageX;
+  window.mouseY = window.event.targetTouches[0].pageY;
 
   if (window.timeKeeper == undefined && window.currentScore.moves != 0) return;
-  if (window.mouseDown) {
-    if (window.mouseY < window.mouseDown[1] - window.moveThreshold)
+  if (window.touchDown) {
+    if (window.mouseY < window.touchDown[1] - window.moveThreshold)
       move(0, -1);
-    else if (window.mouseX < window.mouseDown[0] - window.moveThreshold)
+    else if (window.mouseX < window.touchDown[0] - window.moveThreshold)
       move(-1, 0);
-    else if (window.mouseY > window.mouseDown[1] + window.moveThreshold)
+    else if (window.mouseY > window.touchDown[1] + window.moveThreshold)
       move(0, 1);
-    else if (window.mouseX > window.mouseDown[0] + window.moveThreshold)
+    else if (window.mouseX > window.touchDown[0] + window.moveThreshold)
       move(1, 0);
     else return;
 
-    window.mouseDown = undefined;
+    window.touchDown = undefined;
     checkGameOver();
   }
 }
 
-function onMouseDown() {
-  window.mouseDown = [window.mouseX, window.mouseY];
+function onTouchDown() {
+  window.mouseX = window.event.targetTouches[0].pageX;
+  window.mouseY = window.event.targetTouches[0].pageY;
+  window.touchDown = [window.mouseX, window.mouseY];
+}
+
+function onTouchUp() {
+  window.touchDown = undefined;
 }
 
 function onMouseUp() {
-  window.mouseDown = undefined;
   if (Math.pow(window.mouseX - window.restartX, 2) +
       Math.pow(window.mouseY - window.restartY, 2) <
       Math.pow(window.restartR, 2)) {
