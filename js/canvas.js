@@ -70,6 +70,7 @@ function onMouseUp() {
 }
 
 function onKeyDown(e) {
+  if (window.timeKeeper == undefined && window.currentScore.moves != 0) return;
   if (e.code == UP || e.code == W)
     move(0, -1);
   else if (e.code == LEFT || e.code == A)
@@ -85,6 +86,24 @@ function onKeyDown(e) {
     if (value != 0 && value != current) return;
     if (value != 0) current++;
   }
+  window.clearInterval(window.timeKeeper);
+  if (!window.bestM.exists ||
+      window.currentScore.moves < window.bestM.moves)
+    window.bestM = {
+      moves: window.currentScore.moves,
+      time: window.currentScore.time,
+      exists: true,
+    };
+  if (!window.bestT.exists ||
+      window.currentScore.time < window.bestT.time)
+    window.bestT = {
+      moves: window.currentScore.moves,
+      time: window.currentScore.time,
+      exists: true,
+    };
+  window.timeKeeper = undefined;
+  setCookie(window.bestM, "bestMoves");
+  setCookie(window.bestT, "bestTime");
 }
 
 function move(dx, dy) {
