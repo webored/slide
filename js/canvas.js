@@ -9,7 +9,7 @@ const W = "KeyW",
       D = "KeyD";
 
 const YEAR = 12 * 30 * 24 * 60 * 60;
-const SHUFFLES = 0;
+const SHUFFLES = 500;
 
 function init() {
   window.canvas = document.getElementById("canvas");
@@ -26,19 +26,20 @@ function init() {
     Array.from({ length: 4 }, (_, i) =>
     Array.from({ length: 4 }, (_, j) => i * 4 + j));
   window.slot = [0, 0];
+  window.currentScore = { moves: 0, time: 0, exists: true };
 
   var possible = [],
       lastMove,
       selection;
   for (var i = 0; i < SHUFFLES; i++) {
-    if (window.slot[0] > 0 && lastMove != RIGHT)
-      possible.push([[-1, 0], LEFT]);
-    if (window.slot[1] > 0 && lastMove != DOWN)
-      possible.push([[0, -1], UP]);
-    if (window.slot[0] < 3 && lastMove != LEFT)
+    if (window.slot[0] > 0 && lastMove != LEFT)
       possible.push([[1, 0], RIGHT]);
-    if (window.slot[1] < 3 && lastMove != UP)
+    if (window.slot[1] > 0 && lastMove != UP)
       possible.push([[0, 1], DOWN]);
+    if (window.slot[0] < 3 && lastMove != RIGHT)
+      possible.push([[-1, 0], LEFT]);
+    if (window.slot[1] < 3 && lastMove != DOWN)
+      possible.push([[0, -1], UP]);
     selection = possible[Math.floor(Math.random() * possible.length)];
     move(...selection[0]);
     lastMove = selection[1];
@@ -64,7 +65,6 @@ function onMouseUp() {
       Math.pow(window.restartR, 2)) {
     if (window.timeKeeper) window.clearInterval(window.timeKeeper);
     init();
-    alert("restart");
     return;
   }
 }
@@ -81,7 +81,18 @@ function onKeyDown(e) {
 }
 
 function move(dx, dy) {
-  alert(dx + ", " + dy);
+  var sx = window.slot[0],
+      sy = window.slot[1],
+      x = sx - dx,
+      y = sy - dy;
+  if (0 > x || x >= 4 || 0 > y || y >= 4) return;
+
+  window.currentScore.moves++;
+  window.tiles[sy][sx] = window.tiles[y][x];
+  window.tiles[y][x] = 0;
+  renderTile(sy * 4 + sx);
+  renderTile(y * 4 + x);
+  window.slot = [x, y]
 }
 
 function updateDimensions() {
@@ -113,6 +124,7 @@ function renderTile(index) {
       r = window.tileDim / 20,
       margin = window.tileDim / 50;
 
+  window.ctx.clearRect(x, y, window.tileDim, window.tileDim);
   window.ctx.beginPath();
   window.ctx.lineWidth = 2;
   window.ctx.strokeStyle = "black";
