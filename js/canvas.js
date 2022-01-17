@@ -17,9 +17,11 @@ function init() {
       
   window.mouseX = 0;
   window.mouseY = 0;
+  window.mouseDown = undefined;
 
   document.addEventListener("keydown", onKeyDown);
   window.canvas.addEventListener("mousemove", onMouseMove, true);
+  window.canvas.addEventListener("mousedown", onMouseDown, true);
   window.canvas.addEventListener("mouseup", onMouseUp, true);
 
   window.tiles =
@@ -57,9 +59,30 @@ function init() {
 function onMouseMove() {
   window.mouseX = window.event.pageX;
   window.mouseY = window.event.pageY;
+
+  if (window.timeKeeper == undefined && window.currentScore.moves != 0) return;
+  if (window.mouseDown) {
+    if (window.mouseY < window.mouseDown[1] - window.moveThreshold)
+      move(0, -1);
+    else if (window.mouseX < window.mouseDown[0] - window.moveThreshold)
+      move(-1, 0);
+    else if (window.mouseY > window.mouseDown[1] + window.moveThreshold)
+      move(0, 1);
+    else if (window.mouseX > window.mouseDown[0] + window.moveThreshold)
+      move(1, 0);
+    else return;
+
+    window.mouseDown = undefined;
+    checkGameOver();
+  }
+}
+
+function onMouseDown() {
+  window.mouseDown = [window.mouseX, window.mouseY];
 }
 
 function onMouseUp() {
+  window.mouseDown = undefined;
   if (Math.pow(window.mouseX - window.restartX, 2) +
       Math.pow(window.mouseY - window.restartY, 2) <
       Math.pow(window.restartR, 2)) {
@@ -80,6 +103,10 @@ function onKeyDown(e) {
   else if (e.code == RIGHT || e.code == D)
     move(1, 0);
 
+  checkGameOver();
+}
+
+function checkGameOver() {
   var current = 1;
   for (var i = 0; i < 16; i++) {
     var value = window.tiles[Math.floor(i / 4)][i % 4];
@@ -143,6 +170,8 @@ function updateDimensions() {
   window.restartX = width - window.tileDim / 4;
   window.restartY = window.tileDim / 4;
   window.restartR = window.tileDim / 7;
+
+  window.moveThreshold = window.tileDim;
 
   for (var i = 0; i < 16; i++)
     renderTile(i);
