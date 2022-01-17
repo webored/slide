@@ -28,6 +28,10 @@ function init() {
   window.canvas.addEventListener("touchup", onTouchUp, true);
   window.canvas.addEventListener("touchcancel", () => window.touchDown = undefined, true);
 
+  newGame();
+}
+
+function newGame() {
   window.tiles =
     Array.from({ length: 4 }, (_, i) =>
     Array.from({ length: 4 }, (_, j) => i * 4 + j));
@@ -102,7 +106,7 @@ function onMouseUp() {
       Math.pow(window.mouseY - window.restartY, 2) <
       Math.pow(window.restartR, 2)) {
     if (window.timeKeeper) window.clearInterval(window.timeKeeper);
-    init();
+    newGame();
     return;
   }
 }
