@@ -186,7 +186,7 @@ function updateDimensions() {
   window.restartY = window.tileDim / 4;
   window.restartR = window.tileDim / 7;
 
-  window.moveThreshold = window.tileDim;
+  window.moveThreshold = window.tileDim * 2 / 3;
 
   for (var i = 0; i < 16; i++)
     renderTile(i);
