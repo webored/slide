@@ -9,6 +9,7 @@ const W = "KeyW",
       D = "KeyD";
 
 const YEAR = 12 * 30 * 24 * 60 * 60;
+const SHUFFLES = 0;
 
 function init() {
   window.canvas = document.getElementById("canvas");
@@ -21,7 +22,28 @@ function init() {
   window.canvas.addEventListener("mousemove", onMouseMove, true);
   window.canvas.addEventListener("mouseup", onMouseUp, true);
 
-  window.solved = 0;
+  window.tiles =
+    Array.from({ length: 4 }, (_, i) =>
+    Array.from({ length: 4 }, (_, j) => i * 4 + j));
+  window.slot = [0, 0];
+
+  var possible = [],
+      lastMove,
+      selection;
+  for (var i = 0; i < SHUFFLES; i++) {
+    if (window.slot[0] > 0 && lastMove != RIGHT)
+      possible.push([[-1, 0], LEFT]);
+    if (window.slot[1] > 0 && lastMove != DOWN)
+      possible.push([[0, -1], UP]);
+    if (window.slot[0] < 3 && lastMove != LEFT)
+      possible.push([[1, 0], RIGHT]);
+    if (window.slot[1] < 3 && lastMove != UP)
+      possible.push([[0, 1], DOWN]);
+    selection = possible[Math.floor(Math.random() * possible.length)];
+    move(...selection[0]);
+    lastMove = selection[1];
+  }
+
   window.currentScore = { moves: 0, time: 0, exists: true };
   processCookie();
   
@@ -78,14 +100,16 @@ function updateDimensions() {
   window.restartY = window.tileDim / 4;
   window.restartR = window.tileDim / 7;
 
-  for (var i = 0; i < 24; i++)
+  for (var i = 0; i < 16; i++)
     renderTile(i);
   renderMeta();
 }
 
 function renderTile(index) {
-  var x = (index % window.width) * window.tileDim + window.offsetX,
-      y = Math.floor(index / window.width) * window.tileDim + window.offsetY,
+  var ix = index % 4,
+      iy = Math.floor(index / 4),
+      x = ix * window.tileDim + window.offsetX,
+      y = iy * window.tileDim + window.offsetY,
       r = window.tileDim / 20,
       margin = window.tileDim / 50;
 
@@ -123,55 +147,18 @@ function renderTile(index) {
     x + r + margin, y + margin
   );
   window.ctx.stroke();
-}
-
-function renderStar(cx, cy, r, color) {
-  window.ctx.translate(cx, cy);
-  window.ctx.beginPath();
-  window.ctx.moveTo(0, -r);
-  for (var i = 0; i < 5; i++) {
-    window.ctx.rotate(Math.PI / 5);
-    window.ctx.lineTo(0, -(r / 2));
-    window.ctx.rotate(Math.PI / 5);
-    window.ctx.lineTo(0, -r);
+  
+  var fontSize = window.tileDim / 2,
+      cx = x + window.tileDim / 2,
+      cy = y + window.tileDim / 2 + fontSize / 3,
+      value = window.tiles[iy][ix];
+  if (value > 0) {
+    window.ctx.textAlign = "center";
+    window.ctx.font = fontSize + "px Courier New";
+    window.ctx.fillStyle = "black";
+    window.ctx.fillText(value, cx, cy);
+    window.ctx.textAlign = "left";
   }
-  window.ctx.closePath();
-  window.ctx.fillStyle = color;
-  window.ctx.fill();
-  window.ctx.translate(-cx, -cy);
-}
-
-function renderTriangle(cx, cy, r, color) {
-  window.ctx.translate(cx, cy);
-  window.ctx.beginPath();
-  window.ctx.moveTo(0, -r);
-  for (var i = 0; i < 2; i++) {
-    window.ctx.rotate(2 * Math.PI / 3);
-    window.ctx.lineTo(0, -r);
-  }
-  window.ctx.rotate(2 * Math.PI / 3);
-  window.ctx.closePath();
-  window.ctx.fillStyle = color;
-  window.ctx.fill();
-  window.ctx.translate(-cx, -cy);
-}
-
-function renderCircle(cx, cy, r, color) {
-  window.ctx.beginPath(); 
-  window.ctx.arc(cx, cy, r, 0, 2 * Math.PI);
-  window.ctx.fillStyle = color;
-  window.ctx.fill();
-}
-
-function renderSquare(cx, cy, r, color) {
-  window.ctx.beginPath();
-  window.ctx.moveTo(cx - r, cy - r);
-  window.ctx.lineTo(cx + r, cy - r);
-  window.ctx.lineTo(cx + r, cy + r);
-  window.ctx.lineTo(cx - r, cy + r);
-  window.ctx.closePath();
-  window.ctx.fillStyle = color;
-  window.ctx.fill();
 }
 
 function renderMeta() {
