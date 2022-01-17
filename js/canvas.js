@@ -27,6 +27,7 @@ function init() {
     Array.from({ length: 4 }, (_, j) => i * 4 + j));
   window.slot = [0, 0];
   window.currentScore = { moves: 0, time: 0, exists: true };
+  processCookie();
 
   var possible = [],
       lastMove,
@@ -45,9 +46,8 @@ function init() {
     lastMove = selection[1];
   }
 
+  window.clearInterval(window.timeKeeper);
   window.currentScore = { moves: 0, time: 0, exists: true };
-  processCookie();
-  
   window.timeKeeper = undefined;
 
   updateDimensions();
@@ -78,6 +78,13 @@ function onKeyDown(e) {
     move(0, 1);
   else if (e.code == RIGHT || e.code == D)
     move(1, 0);
+
+  var current = 1;
+  for (var i = 0; i < 16; i++) {
+    var value = window.tiles[Math.floor(i / 4)][i % 4];
+    if (value != 0 && value != current) return;
+    if (value != 0) current++;
+  }
 }
 
 function move(dx, dy) {
@@ -87,12 +94,19 @@ function move(dx, dy) {
       y = sy - dy;
   if (0 > x || x >= 4 || 0 > y || y >= 4) return;
 
+  if (window.currentScore.moves == 0) {
+    window.timeKeeper = window.setInterval(() => {
+      window.currentScore.time++;
+      renderMeta();
+    }, 1000);
+  }
   window.currentScore.moves++;
   window.tiles[sy][sx] = window.tiles[y][x];
   window.tiles[y][x] = 0;
+  window.slot = [x, y]
   renderTile(sy * 4 + sx);
   renderTile(y * 4 + x);
-  window.slot = [x, y]
+  renderMeta();
 }
 
 function updateDimensions() {
