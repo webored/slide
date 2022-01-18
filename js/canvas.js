@@ -70,7 +70,6 @@ function onMouseMove() {
 }
 
 function onTouchMove() {
-  //console.log(window.event.targetTouches[0].pageX);
   window.mouseX = window.event.targetTouches[0].pageX;
   window.mouseY = window.event.targetTouches[0].pageY;
 
